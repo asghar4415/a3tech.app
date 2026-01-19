@@ -29,26 +29,25 @@ app.use(cors({
 
 app.use(express.json());
 
-// 2. The Contact Route
 app.post('/api/contact', async (req, res) => {
     const { name, email, message } = req.body;
     
-    // Safety check for env variables
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.error("Missing Email Credentials in Environment Variables");
         return res.status(500).json({ error: "Server configuration error" });
     }
 
-  // Explicit connection settings (More stable on Render)
     let transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
-        port: 465,
-        secure: true, // true for 465, false for other ports
+        port: 587,
+        secure: false, 
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS 
         },
-        connectionTimeout: 10000, // 10 seconds
+        tls: {
+            rejectUnauthorized: false,
+            servername: 'smtp.gmail.com'
+        }
     });
 
     const mailOptions = {
@@ -56,17 +55,13 @@ app.post('/api/contact', async (req, res) => {
         to: process.env.EMAIL_USER, 
         subject: `A3 TECH: New Inquiry from ${name}`,
         text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
-        html: `
-            <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        html: `<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
                 <h2 style="color: #FA8112; border-bottom: 2px solid #FA8112; padding-bottom: 10px;">New Project Inquiry</h2>
                 <p><strong>Client Name:</strong> ${name}</p>
                 <p><strong>Client Email:</strong> ${email}</p>
                 <p style="margin-top: 20px;"><strong>Message:</strong></p>
-                <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; color: #333;">
-                    ${message}
-                </div>
-            </div>
-        `
+                <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; color: #333;">${message}</div>
+            </div>`
     };
 
     try {
@@ -79,5 +74,5 @@ app.post('/api/contact', async (req, res) => {
 });
 
 // 3. Start Server
-const PORT = process.env.PORT || 10000;
+const PORT = 10000;
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
