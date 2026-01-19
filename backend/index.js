@@ -39,12 +39,16 @@ app.post('/api/contact', async (req, res) => {
         return res.status(500).json({ error: "Server configuration error" });
     }
 
+  // Explicit connection settings (More stable on Render)
     let transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true, // true for 465, false for other ports
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS 
-        }
+        },
+        connectionTimeout: 10000, // 10 seconds
     });
 
     const mailOptions = {
@@ -75,5 +79,5 @@ app.post('/api/contact', async (req, res) => {
 });
 
 // 3. Start Server
-const PORT = process.env.PORT || 10000; // Render prefers 10000
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
