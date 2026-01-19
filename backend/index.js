@@ -1,44 +1,44 @@
-require('dotenv').config(); // Load environment variables
+require('dotenv').config();
 const express = require('express');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
 
 const app = express();
-// 1. Trust the Render Proxy (Important for HTTPS/Headers)
-app.set('trust proxy', 1);
 
-// 2. Define Allowed Origins
+// 1. Setup CORS before any routes
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://a3tech-wrxg.onrender.com' // Ensure NO trailing slash here
+  'https://a3tech-wrxg.onrender.com'
 ];
 
-// 3. Robust CORS Configuration
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl)
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            console.error(`Blocked by CORS: Origin ${origin} not allowed`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true // Set to true if you ever plan to use cookies/sessions
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
-
-// 4. Handle Preflight Requests Globally (Crucial for Render)
-app.options('*', cors());
 
 app.use(express.json());
 
+// 2. The Contact Route
 app.post('/api/contact', async (req, res) => {
     const { name, email, message } = req.body;
     
+    // Safety check for env variables
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error("Missing Email Credentials in Environment Variables");
+        return res.status(500).json({ error: "Server configuration error" });
+    }
+
     let transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -51,6 +51,7 @@ app.post('/api/contact', async (req, res) => {
         from: email,
         to: process.env.EMAIL_USER, 
         subject: `A3 TECH: New Inquiry from ${name}`,
+        text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
         html: `
             <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
                 <h2 style="color: #FA8112; border-bottom: 2px solid #FA8112; padding-bottom: 10px;">New Project Inquiry</h2>
@@ -60,9 +61,6 @@ app.post('/api/contact', async (req, res) => {
                 <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; color: #333;">
                     ${message}
                 </div>
-                <footer style="margin-top: 20px; font-size: 10px; color: #888;">
-                    This email was sent from the A3 Tech Website contact form.
-                </footer>
             </div>
         `
     };
@@ -76,5 +74,6 @@ app.post('/api/contact', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));
+// 3. Start Server
+const PORT = process.env.PORT || 10000; // Render prefers 10000
+app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
