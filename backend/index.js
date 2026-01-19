@@ -5,7 +5,7 @@ const cors = require('cors');
 
 const app = express();
 
-
+// Add this array to allow multiple origins
 const allowedOrigins = [
   'http://localhost:5173',
   'https://a3tech-wrxg.onrender.com'
@@ -25,6 +25,7 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 
 app.post('/api/contact', async (req, res) => {
