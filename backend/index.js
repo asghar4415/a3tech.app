@@ -4,27 +4,35 @@ const nodemailer = require('nodemailer');
 const cors = require('cors');
 
 const app = express();
+// 1. Trust the Render Proxy (Important for HTTPS/Headers)
+app.set('trust proxy', 1);
 
-// Add this array to allow multiple origins
+// 2. Define Allowed Origins
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://a3tech-wrxg.onrender.com'
+  'https://a3tech-wrxg.onrender.com' // Ensure NO trailing slash here
 ];
 
+// 3. Robust CORS Configuration
 app.use(cors({
     origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
+        // Allow requests with no origin (like mobile apps or curl)
         if (!origin) return callback(null, true);
         
-        if (allowedOrigins.indexOf(origin) === -1) {
-            var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.error(`Blocked by CORS: Origin ${origin} not allowed`);
+            callback(new Error('Not allowed by CORS'));
         }
-        return callback(null, true);
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true // Set to true if you ever plan to use cookies/sessions
 }));
+
+// 4. Handle Preflight Requests Globally (Crucial for Render)
+app.options('*', cors());
 
 app.use(express.json());
 
