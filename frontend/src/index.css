@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  /* This is where we put your specific brand colors */
+  --color-brand-light: #FAF3E1;
+  --color-brand-beige: #F5E7C6;
+  --color-brand-orange: #FA8112;
+  --color-brand-dark: #222222;
+  
+  --font-sans: "Inter", ui-sans-serif, system-ui;
+}
+
+:root {
+  background-color: #222222;
+  color: #FAF3E1;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
